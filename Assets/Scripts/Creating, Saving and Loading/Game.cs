@@ -11,6 +11,7 @@ public class Game : PersistableObject
     public PersistentStorage storage;
 
     private List<Shape> shapes;
+    const int saveVersion = 1; // declares a simple value to be a constant
 
     private void Awake()
     {
@@ -29,7 +30,7 @@ public class Game : PersistableObject
         }
         else if (Input.GetKeyDown(saveKey))
         {
-            storage.Save(this);
+            storage.Save(this, saveVersion);
         }
         else if (Input.GetKeyDown(loadKey))
         {
@@ -54,6 +55,7 @@ public class Game : PersistableObject
         t.localPosition = Random.insideUnitSphere * 5f;
         t.localRotation = Random.rotation;
         t.localScale = Vector3.one * Random.Range(0.1f, 1f);
+        instance.SetColour(Random.ColorHSV(hueMin: 0f, hueMax: 1f, saturationMin: 0.5f, saturationMax: 1f, valueMin: 0.25f, valueMax: 1f, alphaMin: 1f, alphaMax: 1f));
         shapes.Add(instance);
     }
 
@@ -62,16 +64,26 @@ public class Game : PersistableObject
         writer.Write(shapes.Count);
         for (int i = 0; i < shapes.Count; i++)
         {
+            writer.Write(shapes[i].ShapeId);
+            writer.Write(shapes[i].MaterialId);
             shapes[i].Save(writer);
         }
     }
 
     public override void Load(GameDataReader reader)
     {
+        int version = reader.Version;
         int count = reader.ReadInt();
+        if(version > saveVersion)
+        {
+            Debug.LogError("Unsupported future save version " + version);
+            return;
+        }
         for (int i = 0; i < count; i++)
         {
-            Shape instance = shapeFactory.Get(0);
+            int shapeId = version > 0 ? reader.ReadInt() : 0;
+            int materialId = version > 0 ? reader.ReadInt() : 0;
+            Shape instance = shapeFactory.Get(shapeId);
             instance.Load(reader);
             shapes.Add(instance);
         }
