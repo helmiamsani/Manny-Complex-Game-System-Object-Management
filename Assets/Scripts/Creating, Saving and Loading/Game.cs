@@ -10,8 +10,11 @@ public class Game : PersistableObject
     public KeyCode saveKey = KeyCode.S;
     public KeyCode loadKey = KeyCode.L;
     public PersistentStorage storage;
+    public float CreationSpeed { get; set; }
+    public float DestructionSpeed { get; set; }
 
     private List<Shape> shapes;
+    private float CreationProgress, destructionProgress;
     const int saveVersion = 1; // declares a simple value to be a constant
 
     private void Awake()
@@ -41,6 +44,20 @@ public class Game : PersistableObject
         {
             BeginNewGame();
             storage.Load(this);
+        }
+
+        CreationProgress += Time.deltaTime * CreationSpeed;
+        while (CreationProgress >= 1f)
+        {
+            CreationProgress -= 0f;
+            CreateShape();
+        }
+
+        destructionProgress += Time.deltaTime * DestructionSpeed;
+        while(destructionProgress >= 1f)
+        {
+            destructionProgress -= 1f;
+            DestroyShape();
         }
     }
 
