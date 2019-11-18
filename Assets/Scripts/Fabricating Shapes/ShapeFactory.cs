@@ -26,17 +26,42 @@ public class ShapeFactory : ScriptableObject
             }
             List<Shape> pool = pools[shapeId];
             int lastIndex = pool.Count - 1;
-            instance = pool[lastIndex];
+            if (lastIndex >= 0)
+            {
+                instance = pool[lastIndex];
+                pool.RemoveAt(lastIndex);
+            }
+            else
+            {
+                instance = Instantiate(prefabs[shapeId]);
+                instance.ShapeId = shapeId;
+            }
+
             instance.gameObject.SetActive(true);
-            pool.RemoveAt(lastIndex);
         }
         else
         {
             instance = Instantiate(prefabs[shapeId]);
-            instance.ShapeId = shapeId;
         }
 
         instance.SetMaterial(materials[materialId], materialId);
+        return instance;
+    }
+    public void Reclaim(Shape shapeToRecycle)
+    {
+        if (recycle)
+        {
+            if (pools == null)
+            {
+                CreatePools();
+            }
+            pools[shapeToRecycle.ShapeId].Add(shapeToRecycle);
+            shapeToRecycle.gameObject.SetActive(false);
+        }
+        else
+        {
+            Destroy(shapeToRecycle.gameObject);
+        }
     }
 
     public Shape GetRandom()
